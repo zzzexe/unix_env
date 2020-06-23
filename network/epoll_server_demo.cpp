@@ -1,4 +1,7 @@
 /*
+ * I/O多路复用demo，注册stdin和fifo两个事件
+ *
+ * epoll相关的结构定义：
  * typedef union epoll_data {
  *     void *ptr;
  *     int fd;
@@ -10,6 +13,11 @@
  *     _unit32_t events;
  *     epoll_data_t data;
  * };
+ *
+ * epoll相关系统调用：
+ * int epoll_create(int size);
+ * int epoll_ctl(int epfd, int op, int fd, struct epoll_event* event);
+ * int epoll_wait(int epfd, struct epoll_event* events, int max_events, int timeout);
  */
 #include <iostream>
 #include <sys/epoll.h>
@@ -26,8 +34,8 @@ int main(int argc, char **argv) {
     if (ret != 0) {
         std::cerr << "mkfifo error" << std::endl;
     }
-    // open fifo，此处需要读写打开，如果只读打开在epoll时收不到stdin的数据
-    int fd = open("test_fifo", O_RDWR);
+    // open fifo，此处需要读、写打开
+    int fd = open("test_fifo", O_RDONLY);
     if (fd < 0) {
         std::cerr << "open fifo error" << std::endl;
         return -1;
