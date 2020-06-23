@@ -11,6 +11,7 @@
  *     epoll_data_t data;
  * };
  */
+#include <iostream>
 #include <sys/epoll.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -20,18 +21,21 @@
 #include <stdlib.h>
 
 int main(int argc, char **argv) {
+    // make fifo
     int ret = mkfifo("test_fifo", 0666);
     if (ret != 0) {
         std::cerr << "mkfifo error" << std::endl;
     }
+    // open fifo，此处需要读写打开，如果只读打开在epoll时收不到stdin的数据
     int fd = open("test_fifo", O_RDWR);
     if (fd < 0) {
-        std::cerr "open fifo error" << std::endl;
+        std::cerr << "open fifo error" << std::endl;
         return -1;
     }
+    std::cout << "fifo_fd=" << fd << std::endl;
 
+    // add epoll event
     struct epoll_event event;
-    struct epoll_event wait_event;
     int epfd = epoll_create(10);
     if (epfd == -1) {
         std::cerr << "epoll_create error" << std::endl;
@@ -52,17 +56,19 @@ int main(int argc, char **argv) {
         return -1;
     }
 
+    struct epoll_event wait_event;
     while (true) {
+        std::cerr << "epoll wait..." << std::endl;
         ret = epoll_wait(epfd, &wait_event, 2, -1);
         if (ret == -1) {
             close(epfd);
             std::cerr << "epoll error" << std::endl;
         } else if (ret > 0) {
-            char buff[100] = {0};
+            char buf[100] = {0};
             if ( (wait_event.data.fd == 0) && (wait_event.events == EPOLLIN & EPOLLIN) ) {
                 read(0, buf, sizeof(buf));
                 printf("stdin buf=%s\n", buf);
-            } else if ( (wait_event.data.fd == fd) && (wait_even.events == EPOLLIN & EPOLLIN) ) {
+            } else if ( (wait_event.data.fd == fd) && (wait_event.events == EPOLLIN & EPOLLIN) ) {
                 read(fd, buf, sizeof(buf));
                 printf("fifo buf=%s", buf);
             }
