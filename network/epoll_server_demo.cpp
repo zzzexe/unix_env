@@ -1,5 +1,6 @@
 /*
  * I/O多路复用demo，注册stdin和fifo两个事件
+ * 和write_fifo一起运行，观察输出
  *
  * epoll相关的结构定义：
  * typedef union epoll_data {
